@@ -1,37 +1,51 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { APITester } from "./APITester";
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useGmailLabels, useGmailMessages } from "@/hooks/useGmail";
+import { LoginButton } from "@/components/LoginButton";
+import { UserMenu } from "@/components/UserMenu";
+import { LabelSelector } from "@/components/LabelSelector";
+import { EmailList } from "@/components/EmailList";
 import "./index.css";
 
-import logo from "./logo.svg";
-import reactLogo from "./react.svg";
-
 export function App() {
+  const { isLoading, isAuthenticated, user, login, logout } = useAuth();
+  const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
+  const { labels, isLoading: labelsLoading } = useGmailLabels();
+  const { messages, isLoading: messagesLoading, error: messagesError } = useGmailMessages(selectedLabel);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-8 text-center relative z-10">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="container mx-auto p-8 text-center relative z-10">
+        <LoginButton onClick={login} />
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto p-8 text-center relative z-10">
-      <div className="flex justify-center items-center gap-8 mb-8">
-        <img
-          src={logo}
-          alt="Bun Logo"
-          className="h-36 p-6 transition-all duration-300 hover:drop-shadow-[0_0_2em_#646cffaa] scale-120"
-        />
-        <img
-          src={reactLogo}
-          alt="React Logo"
-          className="h-36 p-6 transition-all duration-300 hover:drop-shadow-[0_0_2em_#61dafbaa] [animation:spin_20s_linear_infinite]"
+    <div className="container mx-auto p-8 relative z-10">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">YNAB Transaction Processor</h1>
+        <UserMenu user={user} onLogout={logout} />
+      </div>
+
+      <div className="mb-6">
+        <LabelSelector
+          labels={labels}
+          isLoading={labelsLoading}
+          selectedLabel={selectedLabel}
+          onSelect={setSelectedLabel}
         />
       </div>
-      <Card>
-        <CardHeader className="gap-4">
-          <CardTitle className="text-3xl font-bold">Bun + React</CardTitle>
-          <CardDescription>
-            Edit <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono">src/App.tsx</code> and save to
-            test HMR
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <APITester />
-        </CardContent>
-      </Card>
+
+      <EmailList messages={messages} isLoading={messagesLoading} error={messagesError} />
     </div>
   );
 }
