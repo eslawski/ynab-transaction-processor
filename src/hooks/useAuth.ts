@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
+import { authClient } from "../auth/auth-client";
 
 interface User {
   email: string;
@@ -15,33 +16,30 @@ interface AuthState {
 }
 
 export function useAuth(): AuthState {
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => {
-        if (res.ok) return res.json();
-        return null;
-      })
-      .then((data) => {
-        if (data) setUser(data);
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
+  const { data: session, isPending } = authClient.useSession();
 
   const login = useCallback(() => {
-    window.location.href = "/api/auth/login";
+    authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/",
+    });
   }, []);
 
   const logout = useCallback(async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setUser(null);
+    await authClient.signOut();
   }, []);
 
+  const user: User | null = session?.user
+    ? {
+        email: session.user.email,
+        name: session.user.name,
+        picture: session.user.image ?? "",
+      }
+    : null;
+
   return {
-    isLoading,
-    isAuthenticated: user !== null,
+    isLoading: isPending,
+    isAuthenticated: !!session?.user,
     user,
     login,
     logout,
