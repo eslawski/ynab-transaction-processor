@@ -1,37 +1,40 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { APITester } from "./APITester";
+import { useAuth } from "@/hooks/useAuth";
+import { useUnapprovedTransactions } from "@/hooks/useYNAB";
+import { UserMenu } from "@/components/UserMenu";
+import { TransactionList } from "@/components/TransactionList";
+import { Button } from "@/components/ui/button";
 import "./index.css";
 
-import logo from "./logo.svg";
-import reactLogo from "./react.svg";
-
 export function App() {
+  const { isAuthenticated, user, login, logout } = useAuth();
+  const { transactions, isLoading, error, refetch } = useUnapprovedTransactions();
+
   return (
-    <div className="container mx-auto p-8 text-center relative z-10">
-      <div className="flex justify-center items-center gap-8 mb-8">
-        <img
-          src={logo}
-          alt="Bun Logo"
-          className="h-36 p-6 transition-all duration-300 hover:drop-shadow-[0_0_2em_#646cffaa] scale-120"
+    <div className="min-h-screen w-full">
+      {/* Header */}
+      <header className="border-b border-border/40 px-6 py-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-sm font-semibold tracking-tight">YNAB</h1>
+          <p className="text-xs text-muted-foreground">Transaction Review</p>
+        </div>
+        {isAuthenticated && user ? (
+          <UserMenu user={user} onLogout={logout} />
+        ) : (
+          <Button variant="outline" size="sm" onClick={login}>
+            Sign in
+          </Button>
+        )}
+      </header>
+
+      {/* Main */}
+      <main className="max-w-4xl mx-auto px-6 py-8">
+        <TransactionList
+          transactions={transactions}
+          isLoading={isLoading}
+          error={error}
+          onRefetch={refetch}
         />
-        <img
-          src={reactLogo}
-          alt="React Logo"
-          className="h-36 p-6 transition-all duration-300 hover:drop-shadow-[0_0_2em_#61dafbaa] [animation:spin_20s_linear_infinite]"
-        />
-      </div>
-      <Card>
-        <CardHeader className="gap-4">
-          <CardTitle className="text-3xl font-bold">Bun + React</CardTitle>
-          <CardDescription>
-            Edit <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono">src/App.tsx</code> and save to
-            test HMR
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <APITester />
-        </CardContent>
-      </Card>
+      </main>
     </div>
   );
 }

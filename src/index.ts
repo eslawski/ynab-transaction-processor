@@ -1,31 +1,29 @@
 import { serve } from "bun";
 import index from "./index.html";
+import { auth } from "./auth/auth";
+import { getUnapprovedTransactions } from "./ynab/client";
 
 const server = serve({
   routes: {
     // Serve index.html for all unmatched routes.
     "/*": index,
 
-    "/api/hello": {
-      async GET(req) {
-        return Response.json({
-          message: "Hello, world!",
-          method: "GET",
-        });
-      },
-      async PUT(req) {
-        return Response.json({
-          message: "Hello, world!",
-          method: "PUT",
-        });
-      },
-    },
+    // --- Auth Routes (handled by better-auth) ---
 
-    "/api/hello/:name": async req => {
-      const name = req.params.name;
-      return Response.json({
-        message: `Hello, ${name}!`,
-      });
+    "/api/auth/*": (req) => auth.handler(req),
+
+    // --- YNAB Routes ---
+
+    "/api/ynab/transactions": {
+      async GET(_req) {
+        try {
+          const transactions = await getUnapprovedTransactions();
+          return Response.json(transactions);
+        } catch (err) {
+          console.error("Failed to fetch YNAB transactions:", err);
+          return Response.json({ error: "Failed to fetch transactions" }, { status: 500 });
+        }
+      },
     },
   },
 
@@ -38,5 +36,4 @@ const server = serve({
   },
 });
 
-console.log(`🚀 Server running at ${server.url}`);
-console.log(`Testing env: ${process.env.TESTING}`);
+console.log(`Server running at ${server.url}`);
