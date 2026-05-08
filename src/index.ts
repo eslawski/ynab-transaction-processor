@@ -1,8 +1,7 @@
 import { serve } from "bun";
 import index from "./index.html";
 import { auth } from "./auth/auth";
-import { listLabels, listMessagesByLabel } from "./gmail/client";
-import type { GmailMessageHeader } from "./gmail/types";
+import { getUnapprovedTransactions } from "./ynab/client";
 
 const server = serve({
   routes: {
@@ -13,83 +12,16 @@ const server = serve({
 
     "/api/auth/*": (req) => auth.handler(req),
 
-    // --- Gmail Routes ---
+    // --- YNAB Routes ---
 
-    "/api/gmail/labels": {
-      async GET(req) {
-        const session = await auth.api.getSession({
-          headers: req.headers,
-        });
-        if (!session) {
-          return Response.json({ error: "Not authenticated" }, { status: 401 });
-        }
-
-        const tokenResult = await auth.api.getAccessToken({
-          body: { providerId: "google" },
-          headers: req.headers,
-        });
-        if (!tokenResult?.accessToken) {
-          return Response.json({ error: "No Google access token" }, { status: 401 });
-        }
-
+    "/api/ynab/transactions": {
+      async GET(_req) {
         try {
-          const labels = await listLabels(tokenResult.accessToken);
-          return Response.json(labels);
+          const transactions = await getUnapprovedTransactions();
+          return Response.json(transactions);
         } catch (err) {
-          console.error("Failed to list labels:", err);
-          return Response.json({ error: "Failed to fetch labels" }, { status: 500 });
-        }
-      },
-    },
-
-    "/api/gmail/messages": {
-      async GET(req) {
-        const session = await auth.api.getSession({
-          headers: req.headers,
-        });
-        if (!session) {
-          return Response.json({ error: "Not authenticated" }, { status: 401 });
-        }
-
-        const tokenResult = await auth.api.getAccessToken({
-          body: { providerId: "google" },
-          headers: req.headers,
-        });
-        if (!tokenResult?.accessToken) {
-          return Response.json({ error: "No Google access token" }, { status: 401 });
-        }
-
-        const url = new URL(req.url);
-        const labelId = url.searchParams.get("label");
-        const maxResults = parseInt(url.searchParams.get("maxResults") ?? "20", 10);
-
-        if (!labelId) {
-          return Response.json({ error: "Missing label parameter" }, { status: 400 });
-        }
-
-        try {
-          const messages = await listMessagesByLabel(tokenResult.accessToken, labelId, maxResults);
-
-          // Transform messages to a simpler format for the frontend
-          const simplified = messages.map((msg) => {
-            const headers = msg.payload?.headers ?? [];
-            const getHeader = (name: string) =>
-              headers.find((h: GmailMessageHeader) => h.name === name)?.value ?? "";
-
-            return {
-              id: msg.id,
-              threadId: msg.threadId,
-              subject: getHeader("Subject"),
-              from: getHeader("From"),
-              date: getHeader("Date"),
-              snippet: msg.snippet,
-            };
-          });
-
-          return Response.json(simplified);
-        } catch (err) {
-          console.error("Failed to list messages:", err);
-          return Response.json({ error: "Failed to fetch messages" }, { status: 500 });
+          console.error("Failed to fetch YNAB transactions:", err);
+          return Response.json({ error: "Failed to fetch transactions" }, { status: 500 });
         }
       },
     },

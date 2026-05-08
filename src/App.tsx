@@ -1,51 +1,40 @@
-import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useGmailLabels, useGmailMessages } from "@/hooks/useGmail";
-import { LoginButton } from "@/components/LoginButton";
+import { useUnapprovedTransactions } from "@/hooks/useYNAB";
 import { UserMenu } from "@/components/UserMenu";
-import { LabelSelector } from "@/components/LabelSelector";
-import { EmailList } from "@/components/EmailList";
+import { TransactionList } from "@/components/TransactionList";
+import { Button } from "@/components/ui/button";
 import "./index.css";
 
 export function App() {
-  const { isLoading, isAuthenticated, user, login, logout } = useAuth();
-  const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
-  const { labels, isLoading: labelsLoading } = useGmailLabels();
-  const { messages, isLoading: messagesLoading, error: messagesError } = useGmailMessages(selectedLabel);
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto p-8 text-center relative z-10">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated || !user) {
-    return (
-      <div className="container mx-auto p-8 text-center relative z-10">
-        <LoginButton onClick={login} />
-      </div>
-    );
-  }
+  const { isAuthenticated, user, login, logout } = useAuth();
+  const { transactions, isLoading, error, refetch } = useUnapprovedTransactions();
 
   return (
-    <div className="container mx-auto p-8 relative z-10">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">YNAB Transaction Processor</h1>
-        <UserMenu user={user} onLogout={logout} />
-      </div>
+    <div className="min-h-screen w-full">
+      {/* Header */}
+      <header className="border-b border-border/40 px-6 py-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-sm font-semibold tracking-tight">YNAB</h1>
+          <p className="text-xs text-muted-foreground">Transaction Review</p>
+        </div>
+        {isAuthenticated && user ? (
+          <UserMenu user={user} onLogout={logout} />
+        ) : (
+          <Button variant="outline" size="sm" onClick={login}>
+            Sign in
+          </Button>
+        )}
+      </header>
 
-      <div className="mb-6">
-        <LabelSelector
-          labels={labels}
-          isLoading={labelsLoading}
-          selectedLabel={selectedLabel}
-          onSelect={setSelectedLabel}
+      {/* Main */}
+      <main className="max-w-4xl mx-auto px-6 py-8">
+        <TransactionList
+          transactions={transactions}
+          isLoading={isLoading}
+          error={error}
+          onRefetch={refetch}
         />
-      </div>
-
-      <EmailList messages={messages} isLoading={messagesLoading} error={messagesError} />
+      </main>
     </div>
   );
 }
