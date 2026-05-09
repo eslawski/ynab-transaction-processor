@@ -8,6 +8,7 @@ export function SessionView() {
   const phase = useSessionStore((s) => s.phase);
   const ynabTransactions = useSessionStore((s) => s.ynabTransactions);
   const rawEmails = useSessionStore((s) => s.rawEmails);
+  const emailSource = useSessionStore((s) => s.emailSource);
 
   useSessionLoader(true);
 
@@ -18,10 +19,20 @@ export function SessionView() {
   return (
     <div className="grid grid-cols-2 gap-6">
       <section className="flex flex-col gap-3">
-        <header className="flex items-baseline justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Order confirmation emails
-          </h2>
+        <header className="flex items-baseline justify-between gap-2">
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Order confirmation emails
+            </h2>
+            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              last 30 days
+            </span>
+            {emailSource === "mock" && (
+              <span className="rounded border border-amber-400/40 bg-amber-400/10 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-amber-400">
+                mock data
+              </span>
+            )}
+          </div>
           <span className="font-mono text-xs text-muted-foreground">{rawEmails.length}</span>
         </header>
         {rawEmails.length === 0 ? (

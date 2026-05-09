@@ -12,6 +12,13 @@ export interface RawEmail {
   parseStatus: EmailParseStatus;
 }
 
+export type EmailSource = "mock" | "gmail";
+
+export interface EmailsResponse {
+  source: EmailSource;
+  emails: RawEmail[];
+}
+
 export interface LineItem {
   name: string;
   quantity: number;

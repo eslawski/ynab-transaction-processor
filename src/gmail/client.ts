@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite";
-import type { RawEmail } from "@/types";
+import type { EmailsResponse, RawEmail } from "@/types";
 import { loadFixtureEmails } from "./fixtures";
 
 const GMAIL_BASE_URL = "https://gmail.googleapis.com/gmail/v1";
@@ -7,9 +7,9 @@ const ORDER_LABEL_NAME = "Order Confirmations";
 const RECENT_WINDOW_QUERY = "newer_than:30d";
 const MAX_RESULTS = 100;
 
-export async function getOrderConfirmationEmails(userId: string): Promise<RawEmail[]> {
+export async function getOrderConfirmationEmails(userId: string): Promise<EmailsResponse> {
   if (process.env.USE_MOCK_EMAILS === "true") {
-    return loadFixtureEmails();
+    return { source: "mock", emails: loadFixtureEmails() };
   }
 
   const accessToken = readGoogleAccessToken(userId);
@@ -18,11 +18,14 @@ export async function getOrderConfirmationEmails(userId: string): Promise<RawEma
   }
 
   const labelId = await findLabelId(accessToken, ORDER_LABEL_NAME);
-  if (!labelId) return [];
+  if (!labelId) return { source: "gmail", emails: [] };
 
   const messageIds = await listMessageIds(accessToken, labelId);
   const messages = await Promise.all(messageIds.map((id) => fetchMessage(accessToken, id)));
-  return messages.filter((m): m is RawEmail => m !== null);
+  return {
+    source: "gmail",
+    emails: messages.filter((m): m is RawEmail => m !== null),
+  };
 }
 
 function readGoogleAccessToken(userId: string): string | null {

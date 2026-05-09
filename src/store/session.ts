@@ -2,6 +2,7 @@ import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 import type {
   EmailParseStatus,
+  EmailSource,
   EmailTransaction,
   PushResult,
   RawEmail,
@@ -13,12 +14,14 @@ export interface SessionState {
   phase: SessionPhase;
   ynabTransactions: YNABTransaction[];
   rawEmails: RawEmail[];
+  emailSource: EmailSource | null;
   emailTransactions: EmailTransaction[];
   matches: Map<string, string>;
   skippedYnabIds: Set<string>;
   pushResult: PushResult | null;
   setYnabTransactions: (txns: YNABTransaction[]) => void;
   setRawEmails: (emails: RawEmail[]) => void;
+  setEmailSource: (source: EmailSource | null) => void;
   setPhase: (phase: SessionPhase) => void;
   updateEmailParseStatus: (emailId: string, status: EmailParseStatus) => void;
   addEmailTransactions: (txns: EmailTransaction[]) => void;
@@ -34,12 +37,14 @@ export function createSessionStore() {
     phase: "loading",
     ynabTransactions: [],
     rawEmails: [],
+    emailSource: null,
     emailTransactions: [],
     matches: new Map(),
     skippedYnabIds: new Set(),
     pushResult: null,
     setYnabTransactions: (ynabTransactions) => set({ ynabTransactions }),
     setRawEmails: (rawEmails) => set({ rawEmails }),
+    setEmailSource: (emailSource) => set({ emailSource }),
     setPhase: (phase) => set({ phase }),
     updateEmailParseStatus: (emailId, status) =>
       set((state) => ({
