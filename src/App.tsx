@@ -1,13 +1,10 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useUnapprovedTransactions } from "@/hooks/useYNAB";
 import { UserMenu } from "@/components/UserMenu";
-import { TransactionList } from "@/components/TransactionList";
 import { Button } from "@/components/ui/button";
 import "./index.css";
 
 export function App() {
   const { isAuthenticated, user, login, logout } = useAuth();
-  const { transactions, isLoading, error, refetch } = useUnapprovedTransactions();
 
   return (
     <div className="min-h-screen w-full">
@@ -26,15 +23,8 @@ export function App() {
         )}
       </header>
 
-      {/* Main */}
-      <main className="max-w-4xl mx-auto px-6 py-8">
-        <TransactionList
-          transactions={transactions}
-          isLoading={isLoading}
-          error={error}
-          onRefetch={refetch}
-        />
-      </main>
+      {/* Main — two-column shell (left: emails, right: YNAB transactions) */}
+      <main className="grid grid-cols-2 gap-6 px-6 py-8" />
     </div>
   );
 }
