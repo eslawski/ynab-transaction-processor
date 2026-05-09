@@ -1,0 +1,630 @@
+{
+  "name": "Expense Extractor Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "be2fc5ce-9a0d-4370-b4da-ce0316e8e2e4",
+              "name": "fromAddress",
+              "value": "={{ $json.fromAddress }}",
+              "type": "string"
+            },
+            {
+              "id": "8d69e2a0-9819-450c-bfe1-03a820575548",
+              "name": "toAddress",
+              "value": "={{ $json.toAddress }}",
+              "type": "string"
+            },
+            {
+              "id": "bfe3e900-59c0-412b-b846-427d54b685e8",
+              "name": "emailBody",
+              "value": "={{ $json.emailBody }}",
+              "type": "string"
+            },
+            {
+              "id": "12db7af1-39b3-4eb9-b818-40a1fbefa82a",
+              "name": "emailDate",
+              "value": "={{ $json.emailDate }}",
+              "type": "string"
+            },
+            {
+              "id": "8798484a-9dad-4604-bc46-fd733a444d0c",
+              "name": "emailSubject",
+              "value": "={{ $json.emailSubject }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        144,
+        512
+      ],
+      "id": "e823f807-f106-4819-ba17-cc56d2cddd5d",
+      "name": "Normalize"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -304,
+        704
+      ],
+      "id": "f16eb663-ffef-480f-92af-1027cbc5a74d",
+      "name": "Test Case Dispatcher",
+      "webhookId": "0f2dfd83-2e53-462e-bcda-bef854d7caa0"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1AhncvK0bQ2GDKAZAiub7yhBN2k2wkPF5zGSJTvepJyY",
+          "mode": "list",
+          "cachedResultName": "N8n Sample Orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1AhncvK0bQ2GDKAZAiub7yhBN2k2wkPF5zGSJTvepJyY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sample Orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1AhncvK0bQ2GDKAZAiub7yhBN2k2wkPF5zGSJTvepJyY/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "orderId",
+              "lookupValue": "={{ $json.chatInput }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -80,
+        704
+      ],
+      "id": "fc8cfc8a-5a02-47b0-8429-bb4378211430",
+      "name": "Sample Orders",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lmW18hy6b7nhqfCy",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the email body:\n\n{{ $json.emailBody }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You will be given the full text of an email. Your task is to extract expense information.\n\nThings to keep in mind:\n- An email could contain multiple transactions\n- Each transaction can contain multiple products\n\n\n## Your task\n\nParse and understand the provided email and return summary that includes:\n\n\n* A summary of each transaction each including:\n  * Order id\n  * The link to view/edit the order. If no such link exists, this should be null\n  * The grand total\n  * A list of every purchased product with its name, unit price, and quantity. Product names should be truncated to 40 characters\n  * Adjustment amount. This number is the grand total minus the sum of all the purchased products . A negative adjustment amount indicates a gift card or discount was used. A positive adjustment amount indicates other fees like shipping, tax, etc. \n\n\n## Format notes:\n\n- All price values (grand total, unit prices, adjustment amount, etc.) should be formatted as integers using milliunits which is calcuated by multiplying the dollar amount by 1000. Here are some examples: $9.99 should be 9990, $25.18 should be 25180."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        400,
+        512
+      ],
+      "id": "77786587-d2c4-4081-a588-db7d8d16a997",
+      "name": "Price Extractor"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"transactions\": [\n    {\n      \"id\": \"some-trans-id\",\n      \"grandTotal\": 3700,\n      \"adjustmentAmount\": 9900,\n      \"orderLink\": \"https://www.foo.com/some-order-link\",\n      \"products\": [\n        {\n          \"name\": \"Product 1\",\n          \"quantity\": 2,\n          \"unitPrice\": 9900\n        }\n      ]\n    }\n  ],\n  \"reasoning\": \"<explain what you did or didn't find>\"\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        496,
+        736
+      ],
+      "id": "ae3fcfe5-ce2a-45b0-9f9c-0931e82cabe9",
+      "name": "Output Parser"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "let { \n  transactions,\n  reasoning\n} = $json.output\n\n// *********************************************\n// Determine payee which credit card it matches\n// to in YNAB.\n// *********************************************\nlet payee;\nlet accountId;\nconst accountIds = {\n  amazon: \"25a630ba-2266-4ad5-a2df-db9d8985ee80\",\n  target: \"0fd6a514-b243-4fce-ae67-654282cba5cb\"\n}\nconst fromAddress = $('Normalize').item.json.fromAddress\nif (fromAddress.includes(\"amazon\")) {\n  payee = \"Amazon\"\n  accountId = accountIds.amazon\n} else {\n  payee = \"Target\"\n  accountId = accountIds.target\n}\n// *********************************************\n\n\n// *********************************************\n// Extract important dates\n// *********************************************\nconst purchaseDate = $('Normalize').item.json.emailDate.slice(0, 10)\nconst extractedDate = new Date().toISOString().slice(0,10)\n// *********************************************\n\n\n// *********************************************\n// Constrct YNAB transactions\n// *********************************************\nconst ynabTransactions = transactions.map(transaction => {\n\n  // Positive adjustmentAmount => taxes/shipping/etc.\n  // Negative adjustmentAmount => discount/giftcareds/etc.\n  const adjustmentAmount = Math.floor(transaction.adjustmentAmount / transaction.products.length)\n  let adjustmentAmountLeftover = transaction.adjustmentAmount % transaction.products.length\n  \n  // YNAB automatically condenses into a single transaction if there is only one subtransaction\n  const subtransactions = transaction.products.map(product => {\n\n    let totalProductPrice = product.unitPrice * product.quantity\n    totalProductPrice += adjustmentAmount\n    if (adjustmentAmountLeftover != 0) {\n      totalProductPrice += adjustmentAmountLeftover\n      adjustmentAmountLeftover = 0\n    }\n    \n    return {\n      amount: totalProductPrice * -1,\n      memo: `${product.name} (${product.quantity})`\n    }\n  })\n  \n\n  return {\n    account_id: accountId,\n    date: purchaseDate,\n    amount: transaction.grandTotal * -1,\n    payee_name: payee,\n    memo: subtransactions.length > 1 ? $json.output.transactions[0].orderLink : \"\",\n    flag_color: \"blue\",\n    category_id: \"ccd6d18b-6e88-4c5e-93b0-cd9e6d66946b\", // Dummy value\n    subtransactions: subtransactions\n  }\n})\n// *********************************************\n\n\nreturn {\n  ynabTransactions: ynabTransactions,\n  ynabTransactionsPretty: JSON.stringify(ynabTransactions, null, 2),\n  extractedDate: extractedDate,\n  emailSubject: $('Normalize').item.json.emailSubject,\n  toAddress: $('Normalize').item.json.toAddress,\n  payee: payee,\n  reasoning: reasoning\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        512
+      ],
+      "id": "6ac9aa6e-4eb8-4ea9-96f9-bf254f2f0145",
+      "name": "Prepare YNAB payload"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1TPFlH4lA9L6GZchc0yZ6oWOiGst6dNN6ZOiHtS3Q5K4",
+          "mode": "list",
+          "cachedResultName": "Extracted expenses",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TPFlH4lA9L6GZchc0yZ6oWOiGst6dNN6ZOiHtS3Q5K4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 184482555,
+          "mode": "list",
+          "cachedResultName": "Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TPFlH4lA9L6GZchc0yZ6oWOiGst6dNN6ZOiHtS3Q5K4/edit#gid=184482555"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ynabTransactionsPretty": "={{ $json.ynabTransactionsPretty }}",
+            "extractedDate": "={{ $json.extractedDate }}",
+            "toAddress": "={{ $json.toAddress }}",
+            "payee": "={{ $json.payee }}",
+            "emailSubject": "={{ $json.emailSubject }}",
+            "reasoning": "={{ $json.reasoning }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "extractedDate",
+              "displayName": "extractedDate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "toAddress",
+              "displayName": "toAddress",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "payee",
+              "displayName": "payee",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "emailSubject",
+              "displayName": "emailSubject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ynabTransactionsPretty",
+              "displayName": "ynabTransactionsPretty",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reasoning",
+              "displayName": "reasoning",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1088,
+        512
+      ],
+      "id": "7f879928-12fd-437a-8d40-5003388af9d8",
+      "name": "Add to Extracted expenses",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lmW18hy6b7nhqfCy",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ynab.com/v1/budgets/last-used/transactions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "=json",
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "jsonBody": "={{ \n  JSON.stringify({\n    transactions: $('Prepare YNAB payload').item.json.ynabTransactions\n  })\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1312,
+        512
+      ],
+      "id": "834a9198-5130-49ca-8ad4-fa4f1d17af15",
+      "name": "Send to YNAB",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "eihdV2g4vmyM3Aox",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "24540aff-6c62-41fd-8762-2b194007d280",
+              "name": "fromAddress",
+              "value": "={{ $json.from.value[0].address }}",
+              "type": "string"
+            },
+            {
+              "id": "c3736e1e-a031-4680-bdb5-59204031d17c",
+              "name": "toAddress",
+              "value": "={{ $json.to.value[0].address }}",
+              "type": "string"
+            },
+            {
+              "id": "d74d7b53-f58d-40dc-91ad-68d0cfa669e6",
+              "name": "emailDate",
+              "value": "={{ $json.date }}",
+              "type": "string"
+            },
+            {
+              "id": "58aad035-0553-47f4-a832-fe251f425c11",
+              "name": "emailSubject",
+              "value": "={{ $json.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "04d64ec9-7d1a-4103-9d7e-80d7ce6e9de7",
+              "name": "emailBody",
+              "value": "={{ $json.textAsHtml }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -80,
+        416
+      ],
+      "id": "bbd1b518-a9e4-4960-a8d3-6e9f4f827b8e",
+      "name": "Extract fields from email"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "labelIds": [
+            "Label_227793827632421081"
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -304,
+        320
+      ],
+      "id": "633a9749-83c5-4773-95ad-dcbc6e7afe27",
+      "name": "Evan's Orders",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "zdbviW0e0IQFbXXY",
+          "name": "Evan's Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "labelIds": [
+            "Label_7666863408966341569"
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -304,
+        512
+      ],
+      "id": "75af7b75-6564-4f51-a552-49c155ff02d4",
+      "name": "Katie's Orders",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Qu4X2JKvpxdcdWqW",
+          "name": "Katie's Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-haiku-4-5-20251001",
+          "mode": "list",
+          "cachedResultName": "Claude Haiku 4.5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        368,
+        736
+      ],
+      "id": "e73b594b-a1aa-4672-ad3f-4de0ddf2b15e",
+      "name": "Anthropic Price Extractor",
+      "credentials": {
+        "anthropicApi": {
+          "id": "0I6JHzw90tQFuT4o",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-haiku-4-5-20251001",
+          "mode": "list",
+          "cachedResultName": "Claude Haiku 4.5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        576,
+        944
+      ],
+      "id": "6f4e14b9-fd14-40ce-8a73-94261c498e2a",
+      "name": "Anthropic Output Formatter",
+      "credentials": {
+        "anthropicApi": {
+          "id": "0I6JHzw90tQFuT4o",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "[Sample Orders](https://docs.google.com/spreadsheets/d/1AhncvK0bQ2GDKAZAiub7yhBN2k2wkPF5zGSJTvepJyY/edit?gid=0#gid=0)",
+        "height": 80,
+        "width": 150
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        864
+      ],
+      "id": "39ff07a5-3ab1-4563-bcb3-d97d95fa4f53",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "[Extracted expenses](https://docs.google.com/spreadsheets/d/1TPFlH4lA9L6GZchc0yZ6oWOiGst6dNN6ZOiHtS3Q5K4/edit?gid=184482555#gid=184482555)",
+        "height": 80,
+        "width": 150
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        400
+      ],
+      "id": "85080d58-467a-436b-9dde-63a638f5ac14",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Normalize": {
+      "main": [
+        [
+          {
+            "node": "Price Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test Case Dispatcher": {
+      "main": [
+        [
+          {
+            "node": "Sample Orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample Orders": {
+      "main": [
+        [
+          {
+            "node": "Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Price Extractor": {
+      "main": [
+        [
+          {
+            "node": "Prepare YNAB payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Price Extractor",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare YNAB payload": {
+      "main": [
+        [
+          {
+            "node": "Add to Extracted expenses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to Extracted expenses": {
+      "main": [
+        [
+          {
+            "node": "Send to YNAB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract fields from email": {
+      "main": [
+        [
+          {
+            "node": "Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evan's Orders": {
+      "main": [
+        [
+          {
+            "node": "Extract fields from email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Katie's Orders": {
+      "main": [
+        [
+          {
+            "node": "Extract fields from email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Price Extractor": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Price Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Output Formatter": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": 180,
+    "availableInMCP": false,
+    "errorWorkflow": "QzPmDjlekDcKAL9j"
+  },
+  "versionId": "2c591b81-ca84-4524-8841-9d0115e47840",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "860e4c31f0a2f5f1a63f675a55950889427a2006cbcd3e62b14c83032f0c73ad"
+  },
+  "id": "QzPmDjlekDcKAL9j",
+  "tags": []
+}
