@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { UserMenu } from "@/components/UserMenu";
+import { SessionView } from "@/components/SessionView";
 import { Button } from "@/components/ui/button";
 import "./index.css";
 
@@ -8,8 +9,7 @@ export function App() {
 
   return (
     <div className="min-h-screen w-full">
-      {/* Header */}
-      <header className="border-b border-border/40 px-6 py-4 flex items-center justify-between">
+      <header className="flex items-center justify-between border-b border-border/40 px-6 py-4">
         <div>
           <h1 className="text-sm font-semibold tracking-tight">YNAB</h1>
           <p className="text-xs text-muted-foreground">Transaction Review</p>
@@ -23,8 +23,15 @@ export function App() {
         )}
       </header>
 
-      {/* Main — two-column shell (left: emails, right: YNAB transactions) */}
-      <main className="grid grid-cols-2 gap-6 px-6 py-8" />
+      <main className="px-6 py-8">
+        {isAuthenticated && user ? (
+          <SessionView />
+        ) : (
+          <div className="flex flex-col items-center gap-3 py-24 text-muted-foreground">
+            <p className="text-sm">Sign in to begin a reconciliation session.</p>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
