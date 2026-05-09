@@ -47,6 +47,7 @@ function makeEmailTxn(overrides: Partial<EmailTransaction> = {}): EmailTransacti
     discount: 0,
     gift_card: 0,
     reasoning: "",
+    parseValid: true,
     ...overrides,
   };
 }

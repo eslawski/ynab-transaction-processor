@@ -1,17 +1,88 @@
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { RawEmail } from "@/types";
+import { sessionStore, useSessionStore } from "@/store/session";
+import type { EmailTransaction, RawEmail } from "@/types";
+import { EmailTransactionCard } from "./EmailTransactionCard";
 
 export function EmailCard({ email }: { email: RawEmail }) {
-  return (
-    <Card className="gap-1 px-4 py-3">
-      <div className="text-sm font-medium leading-snug" title={email.subject}>
-        {email.subject}
-      </div>
-      <div className="font-mono text-xs text-muted-foreground">
-        {formatDate(email.date)}
-      </div>
-    </Card>
+  const childTransactions = useSessionStore((s) =>
+    s.emailTransactions.filter((t) => t.rawEmailId === email.id),
   );
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Card className="gap-2 px-4 py-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-medium leading-snug" title={email.subject}>
+              {email.subject}
+            </div>
+            <div className="font-mono text-xs text-muted-foreground">
+              {formatDate(email.date)}
+            </div>
+          </div>
+          <ParseButton email={email} />
+        </div>
+        {email.parseStatus === "error" && (
+          <div className="font-mono text-[10px] uppercase tracking-wider text-red-400">
+            parse failed · click retry
+          </div>
+        )}
+      </Card>
+      {email.parseStatus === "parsed" && childTransactions.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {childTransactions.map((t) => (
+            <EmailTransactionCard key={t.id} transaction={t} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ParseButton({ email }: { email: RawEmail }) {
+  const status = email.parseStatus;
+  const isParsing = status === "parsing";
+  const label = status === "parsing"
+    ? "Parsing…"
+    : status === "error"
+      ? "Retry"
+      : status === "parsed"
+        ? "Parsed"
+        : "Parse";
+
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant={status === "error" ? "destructive" : "outline"}
+      disabled={isParsing || status === "parsed"}
+      onClick={() => parseEmail(email)}
+    >
+      {label}
+    </Button>
+  );
+}
+
+async function parseEmail(email: RawEmail): Promise<void> {
+  const state = sessionStore.getState();
+  state.updateEmailParseStatus(email.id, "parsing");
+  try {
+    const res = await fetch(`/api/emails/${encodeURIComponent(email.id)}/parse`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ body: email.body, date: email.date }),
+    });
+    if (!res.ok) {
+      throw new Error(`Parse failed: ${res.status}`);
+    }
+    const transactions = (await res.json()) as EmailTransaction[];
+    sessionStore.getState().addEmailTransactions(transactions);
+    sessionStore.getState().updateEmailParseStatus(email.id, "parsed");
+  } catch (err) {
+    console.error(`Failed to parse email ${email.id}:`, err);
+    sessionStore.getState().updateEmailParseStatus(email.id, "error");
+  }
 }
 
 function formatDate(iso: string): string {

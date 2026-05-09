@@ -3,6 +3,7 @@ import index from "./index.html";
 import { auth } from "./auth/auth";
 import { getUnapprovedTransactions } from "./ynab/client";
 import { getOrderConfirmationEmails } from "./gmail/client";
+import { parseEmailWithClaude } from "./ai/parser";
 
 const server = serve({
   routes: {
@@ -41,6 +42,30 @@ const server = serve({
         } catch (err) {
           console.error("Failed to fetch Gmail emails:", err);
           return Response.json({ error: "Failed to fetch emails" }, { status: 500 });
+        }
+      },
+    },
+
+    // --- LLM Email Parsing ---
+
+    "/api/emails/:id/parse": {
+      async POST(req) {
+        const id = req.params.id;
+        try {
+          const payload = (await req.json()) as { body?: unknown; date?: unknown };
+          if (typeof payload.body !== "string" || payload.body.length === 0) {
+            return Response.json({ error: "Missing email body" }, { status: 400 });
+          }
+          const date = typeof payload.date === "string" ? payload.date : new Date().toISOString();
+          const transactions = await parseEmailWithClaude({
+            id,
+            body: payload.body,
+            date,
+          });
+          return Response.json(transactions);
+        } catch (err) {
+          console.error(`Failed to parse email ${id}:`, err);
+          return Response.json({ error: "Failed to parse email" }, { status: 500 });
         }
       },
     },
