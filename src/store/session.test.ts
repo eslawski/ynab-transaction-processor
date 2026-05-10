@@ -147,4 +147,38 @@ describe("session store", () => {
       unmatched: 2,
     });
   });
+
+  it("clearEmailTransactionsForEmail removes only that email's transactions", () => {
+    const store = createSessionStore();
+    const ea = makeEmailTxn({ id: "et1", rawEmailId: "ea" });
+    const eb1 = makeEmailTxn({ id: "et2", rawEmailId: "eb" });
+    const eb2 = makeEmailTxn({ id: "et3", rawEmailId: "eb" });
+
+    store.getState().addEmailTransactions([ea, eb1, eb2]);
+    store.getState().clearEmailTransactionsForEmail("ea");
+
+    expect(store.getState().emailTransactions).toEqual([eb1, eb2]);
+  });
+
+  it("clearEmailTransactionsForEmail removes all transactions when email has multiple", () => {
+    const store = createSessionStore();
+    const ea1 = makeEmailTxn({ id: "et1", rawEmailId: "ea" });
+    const ea2 = makeEmailTxn({ id: "et2", rawEmailId: "ea" });
+    const eb = makeEmailTxn({ id: "et3", rawEmailId: "eb" });
+
+    store.getState().addEmailTransactions([ea1, ea2, eb]);
+    store.getState().clearEmailTransactionsForEmail("ea");
+
+    expect(store.getState().emailTransactions).toEqual([eb]);
+  });
+
+  it("clearEmailTransactionsForEmail is a no-op when the email has no transactions", () => {
+    const store = createSessionStore();
+    const et = makeEmailTxn({ id: "et1", rawEmailId: "ea" });
+    store.getState().addEmailTransactions([et]);
+
+    store.getState().clearEmailTransactionsForEmail("nonexistent");
+
+    expect(store.getState().emailTransactions).toEqual([et]);
+  });
 });
