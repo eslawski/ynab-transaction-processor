@@ -37,6 +37,9 @@ export interface EmailTransaction {
   discount: number;
   gift_card: number;
   reasoning: string;
+  // True if sum(line_items × qty) + tax + shipping − discount − gift_card is
+  // within 5 cents of charge_amount. False parses are rendered as draggable=false.
+  parseValid: boolean;
 }
 
 export interface SplitLine {

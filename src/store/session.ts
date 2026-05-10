@@ -25,6 +25,7 @@ export interface SessionState {
   setPhase: (phase: SessionPhase) => void;
   updateEmailParseStatus: (emailId: string, status: EmailParseStatus) => void;
   addEmailTransactions: (txns: EmailTransaction[]) => void;
+  clearEmailTransactionsForEmail: (emailId: string) => void;
   matchTransaction: (ynabId: string, emailTxnId: string) => void;
   unmatchTransaction: (ynabId: string) => void;
   skipYnabTransaction: (ynabId: string) => void;
@@ -55,6 +56,10 @@ export function createSessionStore() {
     addEmailTransactions: (txns) =>
       set((state) => ({
         emailTransactions: [...state.emailTransactions, ...txns],
+      })),
+    clearEmailTransactionsForEmail: (emailId) =>
+      set((state) => ({
+        emailTransactions: state.emailTransactions.filter((t) => t.rawEmailId !== emailId),
       })),
     matchTransaction: (ynabId, emailTxnId) =>
       set((state) => {
