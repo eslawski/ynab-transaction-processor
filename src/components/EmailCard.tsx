@@ -2,11 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { sessionStore, useSessionStore } from "@/store/session";
 import type { EmailTransaction, RawEmail } from "@/types";
+import { useShallow } from "zustand/react/shallow";
 import { EmailTransactionCard } from "./EmailTransactionCard";
 
 export function EmailCard({ email }: { email: RawEmail }) {
-  const childTransactions = useSessionStore((s) =>
-    s.emailTransactions.filter((t) => t.rawEmailId === email.id),
+  const childTransactions = useSessionStore(
+    useShallow((s) => s.emailTransactions.filter((t) => t.rawEmailId === email.id)),
   );
 
   return (
