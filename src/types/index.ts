@@ -74,6 +74,11 @@ export type ReconciliationResult = SplitResult | BlockedResult;
 
 export type SessionPhase = "loading" | "working" | "pushing" | "done";
 
+export interface PushPayloadItem {
+  ynabTxnId: string;
+  splits: SplitLine[];
+}
+
 export interface PushResult {
   updated: number;
   skipped: number;
