@@ -4,6 +4,7 @@ import { auth } from "./auth/auth";
 import { getUnapprovedTransactions } from "./ynab/client";
 import { getOrderConfirmationEmails } from "./gmail/client";
 import { parseEmailWithClaude } from "./ai/parser";
+import { pushTransactions, type PushPayloadItem } from "./ynab/push";
 
 const server = serve({
   routes: {
@@ -42,6 +43,34 @@ const server = serve({
         } catch (err) {
           console.error("Failed to fetch Gmail emails:", err);
           return Response.json({ error: "Failed to fetch emails" }, { status: 500 });
+        }
+      },
+    },
+
+    // --- YNAB Push ---
+
+    "/api/ynab/push": {
+      async POST(req) {
+        try {
+          const payload = (await req.json()) as {
+            items?: unknown;
+            skipped?: unknown;
+            unmatched?: unknown;
+          };
+          if (!Array.isArray(payload.items)) {
+            return Response.json({ error: "items must be an array" }, { status: 400 });
+          }
+          const skipped = typeof payload.skipped === "number" ? payload.skipped : 0;
+          const unmatched = typeof payload.unmatched === "number" ? payload.unmatched : 0;
+          const result = await pushTransactions(
+            payload.items as PushPayloadItem[],
+            skipped,
+            unmatched,
+          );
+          return Response.json(result);
+        } catch (err) {
+          console.error("Failed to push transactions:", err);
+          return Response.json({ error: "Failed to push transactions" }, { status: 500 });
         }
       },
     },
