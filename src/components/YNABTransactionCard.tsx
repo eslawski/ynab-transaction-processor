@@ -42,7 +42,7 @@ export function YNABTransactionCard({ transaction, onClick }: Props) {
       className={cn(
         "gap-1 px-4 py-3 cursor-pointer transition-colors",
         isOver && "ring-1 ring-primary bg-primary/5",
-        isMatched && "border-emerald-500/40 bg-emerald-500/5",
+        isMatched && "border-blue-500/40 bg-blue-500/5",
         isSkipped && "opacity-50 border-dashed",
       )}
       onClick={onClick}
@@ -60,7 +60,7 @@ export function YNABTransactionCard({ transaction, onClick }: Props) {
       {isMatched && matchedEmailTxn && (
         <div className="mt-1 flex items-center justify-between gap-2">
           <span
-            className="font-mono text-[11px] text-emerald-400 truncate"
+            className="font-mono text-[11px] text-blue-400 truncate"
             title={matchedEmailTxn.order_number}
           >
             #{matchedEmailTxn.order_number}
