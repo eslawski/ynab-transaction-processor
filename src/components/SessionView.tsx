@@ -138,7 +138,70 @@ function WorkingView() {
               </span>
             </header>
             {ynabTransactions.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No unapproved transactions.</p>
+              <div className="flex flex-col items-center gap-5 rounded-xl border border-dashed border-border/40 px-8 py-12 text-center">
+                {/* Budget Beaver — arms raised in celebration, nothing to chew on */}
+                <svg width="110" height="130" viewBox="0 0 110 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {/* Tail */}
+                  <ellipse cx="55" cy="118" rx="32" ry="11" fill="#5C3D11" opacity="0.85"/>
+                  <path d="M27 115 Q55 125 83 115" stroke="#7A5520" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+                  <path d="M32 120 Q55 128 78 120" stroke="#7A5520" strokeWidth="1" fill="none" strokeLinecap="round"/>
+                  <path d="M35 112 Q55 120 75 112" stroke="#7A5520" strokeWidth="1" fill="none" strokeLinecap="round"/>
+
+                  {/* Body */}
+                  <ellipse cx="55" cy="90" rx="24" ry="26" fill="#9B7040"/>
+                  {/* Belly */}
+                  <ellipse cx="55" cy="93" rx="14" ry="18" fill="#C48C58"/>
+
+                  {/* Left arm raised in celebration */}
+                  <path d="M33 80 Q18 64 14 48" stroke="#9B7040" strokeWidth="10" strokeLinecap="round" fill="none"/>
+                  <circle cx="13" cy="45" r="7" fill="#9B7040"/>
+
+                  {/* Right arm raised in celebration */}
+                  <path d="M77 80 Q92 64 96 48" stroke="#9B7040" strokeWidth="10" strokeLinecap="round" fill="none"/>
+                  <circle cx="97" cy="45" r="7" fill="#9B7040"/>
+
+                  {/* Head */}
+                  <circle cx="55" cy="52" r="26" fill="#9B7040"/>
+
+                  {/* Left ear */}
+                  <ellipse cx="35" cy="30" rx="8" ry="9" fill="#9B7040"/>
+                  <ellipse cx="35" cy="31" rx="5" ry="6" fill="#C87050"/>
+
+                  {/* Right ear */}
+                  <ellipse cx="75" cy="30" rx="8" ry="9" fill="#9B7040"/>
+                  <ellipse cx="75" cy="31" rx="5" ry="6" fill="#C87050"/>
+
+                  {/* Happy squinting eyes (arc = ∩ shape) */}
+                  <path d="M41 50 Q46 43 51 50" stroke="#2D1B08" strokeWidth="3" strokeLinecap="round" fill="none"/>
+                  <path d="M59 50 Q64 43 69 50" stroke="#2D1B08" strokeWidth="3" strokeLinecap="round" fill="none"/>
+
+                  {/* Rosy cheeks */}
+                  <circle cx="40" cy="57" r="7" fill="rgba(210,100,70,0.18)"/>
+                  <circle cx="70" cy="57" r="7" fill="rgba(210,100,70,0.18)"/>
+
+                  {/* Nose */}
+                  <ellipse cx="55" cy="60" rx="5" ry="3.5" fill="#3D2010"/>
+
+                  {/* Smile */}
+                  <path d="M48 67 Q55 74 62 67" stroke="#3D2010" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+
+                  {/* Big beaver buck teeth */}
+                  <rect x="47" y="66" width="16" height="13" rx="3" fill="#F8F2DC"/>
+                  <line x1="55" y1="66" x2="55" y2="79" stroke="#DDD0A8" strokeWidth="1.2"/>
+
+                  {/* Sparkle stars */}
+                  <path d="M6 28 L7.4 23.5 L8.8 28 L13.5 29.4 L8.8 30.8 L7.4 35 L6 30.8 L1.5 29.4 Z" fill="rgba(250,204,21,0.65)"/>
+                  <path d="M97 88 L98 85.5 L99 88 L101.5 89 L99 90 L98 92.5 L97 90 L94.5 89 Z" fill="rgba(250,204,21,0.5)"/>
+                  <circle cx="4" cy="70" r="3" fill="rgba(250,204,21,0.4)"/>
+                  <circle cx="106" cy="30" r="2" fill="rgba(250,204,21,0.45)"/>
+                  <circle cx="10" cy="108" r="1.5" fill="rgba(250,204,21,0.35)"/>
+                  <circle cx="102" cy="108" r="2.5" fill="rgba(250,204,21,0.4)"/>
+                </svg>
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm font-semibold text-amber-400">Dam. Nothing to approve.</p>
+                  <p className="text-xs text-muted-foreground">The budget beaver is taking the rest of the day off.</p>
+                </div>
+              </div>
             ) : (
               ynabTransactions.map((txn) => (
                 <YNABTransactionCard
