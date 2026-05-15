@@ -22,6 +22,10 @@ export function useSessionLoader(enabled: boolean): void {
           throw new Error(`YNAB fetch failed: ${ynabRes.status}`);
         }
         if (!gmailRes.ok) {
+          if (gmailRes.status === 401) {
+            sessionStore.getState().setPhase("reauth");
+            return;
+          }
           throw new Error(`Gmail fetch failed: ${gmailRes.status}`);
         }
 

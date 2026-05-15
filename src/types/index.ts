@@ -72,7 +72,7 @@ export interface BlockedResult {
 
 export type ReconciliationResult = SplitResult | BlockedResult;
 
-export type SessionPhase = "loading" | "working" | "pushing" | "done";
+export type SessionPhase = "loading" | "working" | "pushing" | "done" | "reauth";
 
 export interface PushPayloadItem {
   ynabTxnId: string;

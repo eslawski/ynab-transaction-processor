@@ -2,7 +2,7 @@ import { serve } from "bun";
 import index from "./index.html";
 import { auth } from "./auth/auth";
 import { getUnapprovedTransactions } from "./ynab/client";
-import { getOrderConfirmationEmails } from "./gmail/client";
+import { getOrderConfirmationEmails, GoogleAuthError } from "./gmail/client";
 import { parseEmailWithClaude } from "./ai/parser";
 import { pushTransactions, type PushPayloadItem } from "./ynab/push";
 import { createYNABTransaction } from "./ynab/create";
@@ -42,6 +42,9 @@ const server = serve({
           const emails = await getOrderConfirmationEmails(session.user.id);
           return Response.json(emails);
         } catch (err) {
+          if (err instanceof GoogleAuthError) {
+            return Response.json({ error: "Google auth expired" }, { status: 401 });
+          }
           console.error("Failed to fetch Gmail emails:", err);
           return Response.json({ error: "Failed to fetch emails" }, { status: 500 });
         }

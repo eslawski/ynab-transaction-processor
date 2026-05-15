@@ -3,6 +3,13 @@ import type { EmailsResponse, RawEmail } from "@/types";
 import { loadFixtureEmails } from "./fixtures";
 
 const GMAIL_BASE_URL = "https://gmail.googleapis.com/gmail/v1";
+
+export class GoogleAuthError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "GoogleAuthError";
+  }
+}
 const ORDER_LABEL_NAME = "Order Confirmations";
 const RECENT_WINDOW_QUERY = "newer_than:30d";
 const MAX_RESULTS = 100;
@@ -14,7 +21,7 @@ export async function getOrderConfirmationEmails(userId: string): Promise<Emails
 
   const accessToken = readGoogleAccessToken(userId);
   if (!accessToken) {
-    throw new Error("No Google access token found for the current session");
+    throw new GoogleAuthError("No Google access token found for the current session");
   }
 
   const labelId = await findLabelId(accessToken, ORDER_LABEL_NAME);
@@ -56,6 +63,7 @@ async function findLabelId(token: string, name: string): Promise<string | null> 
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) {
+    if (res.status === 401) throw new GoogleAuthError(`Gmail auth expired (${res.status})`);
     throw new Error(`Gmail labels error ${res.status}: ${await res.text()}`);
   }
   const json: GmailLabelsResponse = await res.json();
