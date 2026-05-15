@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Check, Loader2 } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
@@ -43,6 +43,61 @@ export function EmailTransactionCardOverlay({ txn }: { txn: EmailTransaction }) 
   return (
     <div className="rounded border border-border bg-background shadow-2xl cursor-grabbing select-none">
       <CardBody txn={txn} open={true} onToggle={() => {}} isMatched={false} />
+    </div>
+  );
+}
+
+function SendToYNABButton({ txn }: { txn: EmailTransaction }) {
+  const isSent = useSessionStore((s) => s.sentToYNABIds.has(txn.id));
+  const markSentToYNAB = useSessionStore((s) => s.markSentToYNAB);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSend() {
+    setSending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/ynab/create-transaction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ txn }),
+      });
+      if (!res.ok) {
+        const json = (await res.json()) as { error?: string };
+        throw new Error(json.error ?? `HTTP ${res.status}`);
+      }
+      markSentToYNAB(txn.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (isSent) {
+    return (
+      <div className="mt-1 flex items-center gap-1 font-mono text-[10px] text-emerald-400">
+        <Check className="h-3 w-3" />
+        sent to ynab
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-1">
+      <button
+        type="button"
+        disabled={sending}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={handleSend}
+        className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+      >
+        {sending && <Loader2 className="h-3 w-3 animate-spin" />}
+        {sending ? "sending..." : "send to ynab"}
+      </button>
+      {error && (
+        <div className="mt-0.5 font-mono text-[10px] text-red-400 break-all">{error}</div>
+      )}
     </div>
   );
 }
@@ -101,6 +156,8 @@ function CardBody({
               parse mismatch · not draggable
             </div>
           )}
+
+          {txn.parseValid && <SendToYNABButton txn={txn} />}
 
           <details className="mt-1">
             <summary className="cursor-pointer select-none font-mono text-[10px] uppercase tracking-wider text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors">
