@@ -76,27 +76,29 @@ function SendToYNABButton({ txn }: { txn: EmailTransaction }) {
 
   if (isSent) {
     return (
-      <div className="mt-1 flex items-center gap-1 font-mono text-[10px] text-emerald-400">
-        <Check className="h-3 w-3" />
-        sent to ynab
+      <div className="mt-2 flex justify-end">
+        <div className="flex items-center gap-1.5 font-mono text-[10px] text-emerald-400">
+          <Check className="h-3 w-3" />
+          Sent to YNAB
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mt-1">
+    <div className="mt-2 flex flex-col items-end">
       <button
         type="button"
         disabled={sending}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={handleSend}
-        className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+        className="flex items-center gap-1.5 rounded border border-border bg-muted/40 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-foreground/70 hover:bg-accent hover:text-foreground hover:border-border/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {sending && <Loader2 className="h-3 w-3 animate-spin" />}
-        {sending ? "sending..." : "send to ynab"}
+        {sending ? "Sending..." : "Send to YNAB"}
       </button>
       {error && (
-        <div className="mt-0.5 font-mono text-[10px] text-red-400 break-all">{error}</div>
+        <div className="mt-0.5 font-mono text-[10px] text-red-400 break-all text-right">{error}</div>
       )}
     </div>
   );
