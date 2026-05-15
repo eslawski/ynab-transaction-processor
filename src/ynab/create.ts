@@ -19,11 +19,36 @@ export async function createYNABTransaction(txn: EmailTransaction): Promise<stri
     throw new Error(`Cannot split transaction: ${result.reason}`);
   }
 
-  const subtransactions = result.splits.map((s) => ({
-    amount: -Math.round(s.amount * 1000),
-    memo: s.memo,
-    category_id: DUMMY_CATEGORY_ID,
-  }));
+  const { splits } = result;
+  const amountMilli = -Math.round(txn.charge_amount * 1000);
+
+  const transaction =
+    splits.length > 1
+      ? {
+          account_id: accountId,
+          date: txn.charge_date,
+          amount: amountMilli,
+          payee_name: "Amazon",
+          approved: false,
+          cleared: "uncleared" as const,
+          flag_color: "blue" as const,
+          subtransactions: splits.map((s) => ({
+            amount: -Math.round(s.amount * 1000),
+            memo: s.memo,
+            category_id: DUMMY_CATEGORY_ID,
+          })),
+        }
+      : {
+          account_id: accountId,
+          date: txn.charge_date,
+          amount: amountMilli,
+          payee_name: "Amazon",
+          approved: false,
+          cleared: "uncleared" as const,
+          flag_color: "blue" as const,
+          category_id: DUMMY_CATEGORY_ID,
+          ...(splits[0]?.memo ? { memo: splits[0].memo } : {}),
+        };
 
   const res = await fetch(`${YNAB_BASE_URL}/budgets/${budgetId}/transactions`, {
     method: "POST",
@@ -31,17 +56,7 @@ export async function createYNABTransaction(txn: EmailTransaction): Promise<stri
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      transaction: {
-        account_id: accountId,
-        date: txn.charge_date,
-        amount: -Math.round(txn.charge_amount * 1000),
-        payee_name: "Amazon",
-        approved: false,
-        cleared: "uncleared",
-        subtransactions,
-      },
-    }),
+    body: JSON.stringify({ transaction }),
   });
 
   if (!res.ok) {
