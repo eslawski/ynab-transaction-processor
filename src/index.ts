@@ -5,6 +5,7 @@ import { getUnapprovedTransactions } from "./ynab/client";
 import { getOrderConfirmationEmails } from "./gmail/client";
 import { parseEmailWithClaude } from "./ai/parser";
 import { pushTransactions, type PushPayloadItem } from "./ynab/push";
+import { createYNABTransaction } from "./ynab/create";
 
 const server = serve({
   routes: {
@@ -71,6 +72,24 @@ const server = serve({
         } catch (err) {
           console.error("Failed to push transactions:", err);
           return Response.json({ error: "Failed to push transactions" }, { status: 500 });
+        }
+      },
+    },
+
+    // --- YNAB Create Transaction ---
+
+    "/api/ynab/create-transaction": {
+      async POST(req) {
+        try {
+          const payload = (await req.json()) as { txn?: unknown };
+          if (!payload.txn || typeof payload.txn !== "object") {
+            return Response.json({ error: "Missing txn" }, { status: 400 });
+          }
+          const ynabTransactionId = await createYNABTransaction(payload.txn as Parameters<typeof createYNABTransaction>[0]);
+          return Response.json({ ynabTransactionId });
+        } catch (err) {
+          console.error("Failed to create YNAB transaction:", err);
+          return Response.json({ error: "Failed to create transaction" }, { status: 500 });
         }
       },
     },

@@ -18,6 +18,7 @@ export interface SessionState {
   emailTransactions: EmailTransaction[];
   matches: Map<string, string>;
   skippedYnabIds: Set<string>;
+  sentToYNABIds: Set<string>;
   pushResult: PushResult | null;
   setYnabTransactions: (txns: YNABTransaction[]) => void;
   setRawEmails: (emails: RawEmail[]) => void;
@@ -30,6 +31,7 @@ export interface SessionState {
   unmatchTransaction: (ynabId: string) => void;
   skipYnabTransaction: (ynabId: string) => void;
   unskipYnabTransaction: (ynabId: string) => void;
+  markSentToYNAB: (emailTxnId: string) => void;
   setPushResult: (result: PushResult | null) => void;
 }
 
@@ -42,6 +44,7 @@ export function createSessionStore() {
     emailTransactions: [],
     matches: new Map(),
     skippedYnabIds: new Set(),
+    sentToYNABIds: new Set(),
     pushResult: null,
     setYnabTransactions: (ynabTransactions) => set({ ynabTransactions }),
     setRawEmails: (rawEmails) => set({ rawEmails }),
@@ -84,6 +87,12 @@ export function createSessionStore() {
         const next = new Set(state.skippedYnabIds);
         next.delete(ynabId);
         return { skippedYnabIds: next };
+      }),
+    markSentToYNAB: (emailTxnId) =>
+      set((state) => {
+        const next = new Set(state.sentToYNABIds);
+        next.add(emailTxnId);
+        return { sentToYNABIds: next };
       }),
     setPushResult: (pushResult) => set({ pushResult }),
   }));
