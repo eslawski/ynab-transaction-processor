@@ -45,7 +45,7 @@ export function YNABTransactionCard({ transaction, onClick }: Props) {
       ref={setNodeRef}
       className={cn(
         "group relative gap-1.5 px-4 py-3 cursor-pointer transition-all duration-200 hover:border-border-strong hover:bg-card",
-        isOver && "drop-glow border-transparent scale-[1.01]",
+        isOver && "drop-glow border-transparent scale-[1.025] -translate-y-0.5",
         isMatched && "border-transparent ring-azure bg-[oklch(0.74_0.16_235)]/[0.05]",
         isSkipped && "opacity-50 border-dashed",
       )}
@@ -55,12 +55,14 @@ export function YNABTransactionCard({ transaction, onClick }: Props) {
       <span
         aria-hidden
         className={cn(
-          "absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full transition-colors",
-          isMatched
-            ? "bg-[oklch(0.74_0.16_235)]"
+          "absolute top-2 bottom-2 rounded-r-full transition-all duration-200",
+          isOver
+            ? "left-0 w-[5px] bg-[oklch(0.84_0.165_168)] shadow-[0_0_12px_2px_oklch(0.84_0.165_168/0.7)]"
+            : isMatched
+            ? "left-0 w-[3px] bg-[oklch(0.74_0.16_235)]"
             : isSkipped
-            ? "bg-muted-foreground/30"
-            : "bg-transparent group-hover:bg-[oklch(0.84_0.165_168)]/50",
+            ? "left-0 w-[3px] bg-muted-foreground/30"
+            : "left-0 w-[3px] bg-transparent group-hover:bg-[oklch(0.84_0.165_168)]/50",
         )}
       />
 
@@ -75,8 +77,15 @@ export function YNABTransactionCard({ transaction, onClick }: Props) {
       <div className="flex items-center justify-between gap-2">
         <div className="font-mono text-[11px] text-muted-foreground">{formatDate(transaction.date)}</div>
         {!isMatched && !isSkipped && (
-          <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/50 opacity-0 transition-opacity group-hover:opacity-100">
-            drop or click
+          <span
+            className={cn(
+              "font-mono text-[10px] uppercase tracking-wider transition-all",
+              isOver
+                ? "rounded-full border border-[oklch(0.84_0.165_168)]/60 bg-[oklch(0.84_0.165_168)]/15 px-2 py-0.5 text-[oklch(0.88_0.17_168)] opacity-100"
+                : "text-muted-foreground/50 opacity-0 group-hover:opacity-100",
+            )}
+          >
+            {isOver ? "drop here" : "drop or click"}
           </span>
         )}
       </div>

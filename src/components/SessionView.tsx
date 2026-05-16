@@ -101,7 +101,10 @@ function WorkingView() {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col gap-6" style={{ animation: "fadeIn 0.4s ease-out" }}>
+      <div
+        className="flex flex-col gap-6 lg:h-[calc(100vh-145px)]"
+        style={{ animation: "fadeIn 0.4s ease-out" }}
+      >
         <SessionHeader
           matched={matchedCount}
           skipped={skippedCount}
@@ -120,8 +123,8 @@ function WorkingView() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <section className="flex flex-col gap-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:flex-1 lg:min-h-0">
+          <section className="flex flex-col gap-3 lg:min-h-0">
             <ColumnHeader
               icon={<Inbox className="h-3.5 w-3.5" />}
               title="Order confirmation emails"
@@ -137,21 +140,23 @@ function WorkingView() {
                 ) : null
               }
             />
-            {rawEmails.length === 0 ? (
-              <EmptyState
-                title="Inbox is empty"
-                desc="No order-confirmation emails in the last 30 days."
-              />
-            ) : (
-              <div className="flex flex-col gap-3">
-                {rawEmails.map((email) => (
-                  <EmailCard key={email.id} email={email} />
-                ))}
-              </div>
-            )}
+            <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+              {rawEmails.length === 0 ? (
+                <EmptyState
+                  title="Inbox is empty"
+                  desc="No order-confirmation emails in the last 30 days."
+                />
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {rawEmails.map((email) => (
+                    <EmailCard key={email.id} email={email} />
+                  ))}
+                </div>
+              )}
+            </div>
           </section>
 
-          <section className="flex flex-col gap-3">
+          <section className="flex flex-col gap-3 lg:min-h-0">
             <ColumnHeader
               icon={<Wallet className="h-3.5 w-3.5" />}
               title="Unapproved YNAB transactions"
@@ -159,21 +164,23 @@ function WorkingView() {
               count={ynabTransactions.length}
               accent="mint"
             />
-            {ynabTransactions.length === 0 ? (
-              <BeaverEmptyState />
-            ) : (
-              <div className="flex flex-col gap-3">
-                {ynabTransactions.map((txn) => (
-                  <YNABTransactionCard
-                    key={txn.id}
-                    transaction={txn}
-                    onClick={() => setDrawerTxnId(txn.id)}
-                  />
-                ))}
-              </div>
-            )}
+            <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+              {ynabTransactions.length === 0 ? (
+                <BeaverEmptyState />
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {ynabTransactions.map((txn) => (
+                    <YNABTransactionCard
+                      key={txn.id}
+                      transaction={txn}
+                      onClick={() => setDrawerTxnId(txn.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
 
-            <div className="sticky bottom-4 z-20 mt-4">
+            <div className="z-20 mt-1">
               <div className="glass-strong flex items-center justify-between gap-4 rounded-xl px-4 py-3 shadow-2xl">
                 <div className="flex flex-col leading-tight">
                   <span className="kicker">Ready to push</span>
