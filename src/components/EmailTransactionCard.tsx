@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronRight, Check, Loader2 } from "lucide-react";
+import { ChevronRight, Check, GripVertical, Loader2, SendHorizontal } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
@@ -27,13 +27,18 @@ export function EmailTransactionCard({ txn }: { txn: EmailTransaction }) {
       {...listeners}
       {...attributes}
       className={cn(
-        "rounded border border-border/50 bg-background/60 select-none",
-        txn.parseValid && !isMatched && "cursor-grab active:cursor-grabbing hover:border-border",
-        !txn.parseValid && "cursor-not-allowed opacity-60",
-        isDragging && "opacity-25",
-        isMatched && "border-blue-500/40 bg-blue-500/5",
+        "group relative rounded-lg border border-border bg-surface/50 backdrop-blur-sm select-none transition-all",
+        txn.parseValid && !isMatched && "cursor-grab hover:bg-surface hover:border-border-strong active:cursor-grabbing",
+        !txn.parseValid && "cursor-not-allowed opacity-60 border-[oklch(0.82_0.17_80)]/30",
+        isDragging && "opacity-30",
+        isMatched && "ring-azure border-transparent bg-[oklch(0.74_0.16_235)]/[0.06]",
       )}
     >
+      {txn.parseValid && !isMatched && (
+        <span className="pointer-events-none absolute left-1 top-1/2 -translate-y-1/2 text-muted-foreground/30 opacity-0 transition-opacity group-hover:opacity-100">
+          <GripVertical className="h-3 w-3" />
+        </span>
+      )}
       <CardBody txn={txn} open={open} onToggle={() => setOpen((o) => !o)} isMatched={isMatched} />
     </div>
   );
@@ -41,7 +46,7 @@ export function EmailTransactionCard({ txn }: { txn: EmailTransaction }) {
 
 export function EmailTransactionCardOverlay({ txn }: { txn: EmailTransaction }) {
   return (
-    <div className="rounded border border-border bg-background shadow-2xl cursor-grabbing select-none">
+    <div className="rounded-lg border border-border-strong glass-strong cursor-grabbing select-none rotate-[-1.5deg] shadow-2xl ring-mint">
       <CardBody txn={txn} open={true} onToggle={() => {}} isMatched={false} />
     </div>
   );
@@ -77,7 +82,7 @@ function SendToYNABButton({ txn }: { txn: EmailTransaction }) {
   if (isSent) {
     return (
       <div className="mt-2 flex justify-end">
-        <div className="flex items-center gap-1.5 font-mono text-[10px] text-emerald-400">
+        <div className="flex items-center gap-1.5 rounded-full border border-[oklch(0.84_0.165_168)]/30 bg-[oklch(0.84_0.165_168)]/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-[oklch(0.84_0.165_168)]">
           <Check className="h-3 w-3" />
           Sent to YNAB
         </div>
@@ -92,13 +97,13 @@ function SendToYNABButton({ txn }: { txn: EmailTransaction }) {
         disabled={sending}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={handleSend}
-        className="flex items-center gap-1.5 rounded border border-border bg-muted/40 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-foreground/70 hover:bg-accent hover:text-foreground hover:border-border/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex items-center gap-1.5 rounded-md border border-border bg-surface/60 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-all hover:bg-surface hover:text-foreground hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {sending && <Loader2 className="h-3 w-3 animate-spin" />}
-        {sending ? "Sending..." : "Send to YNAB"}
+        {sending ? <Loader2 className="h-3 w-3 animate-spin" /> : <SendHorizontal className="h-3 w-3" />}
+        {sending ? "Sending" : "Send to YNAB"}
       </button>
       {error && (
-        <div className="mt-0.5 font-mono text-[10px] text-red-400 break-all text-right">{error}</div>
+        <div className="mt-1 font-mono text-[10px] text-[oklch(0.82_0.18_22)] break-all text-right">{error}</div>
       )}
     </div>
   );
@@ -117,18 +122,21 @@ function CardBody({
 }) {
   return (
     <div className="flex flex-col px-3 py-2.5">
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <button
           type="button"
           onPointerDown={(e) => e.stopPropagation()}
           onClick={onToggle}
-          className="shrink-0 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
+          className="shrink-0 rounded p-0.5 text-muted-foreground/50 hover:bg-surface hover:text-muted-foreground transition-colors"
         >
-          <ChevronRight className={cn("h-3 w-3 transition-transform", open && "rotate-90")} />
+          <ChevronRight className={cn("h-3 w-3 transition-transform duration-200", open && "rotate-90")} />
         </button>
         <div className="flex items-baseline justify-between gap-2 flex-1 min-w-0">
           <span
-            className={cn("font-mono text-[11px] truncate", isMatched ? "text-blue-400" : "text-muted-foreground")}
+            className={cn(
+              "font-mono text-[11px] truncate transition-colors",
+              isMatched ? "text-[oklch(0.78_0.16_235)]" : "text-muted-foreground",
+            )}
             title={txn.order_number}
           >
             #{txn.order_number}
@@ -140,7 +148,7 @@ function CardBody({
       </div>
 
       {open && (
-        <div className="mt-1 flex flex-col gap-1">
+        <div className="mt-2 flex flex-col gap-1 pl-5" style={{ animation: "fadeIn 0.2s ease-out" }}>
           {txn.line_items.map((item, i) => (
             <LineRow
               key={i}
@@ -148,13 +156,13 @@ function CardBody({
               amount={item.quantity * item.unit_price}
             />
           ))}
-          {txn.tax !== 0 && <LineRow label="Tax" amount={txn.tax} />}
-          {txn.shipping !== 0 && <LineRow label="Shipping" amount={txn.shipping} />}
+          {txn.tax !== 0 && <LineRow label="Tax" amount={txn.tax} muted />}
+          {txn.shipping !== 0 && <LineRow label="Shipping" amount={txn.shipping} muted />}
           {txn.discount !== 0 && <LineRow label="Discount" amount={-txn.discount} credit />}
           {txn.gift_card !== 0 && <LineRow label="Gift card" amount={-txn.gift_card} credit />}
 
           {!txn.parseValid && (
-            <div className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-amber-400">
+            <div className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-md border border-[oklch(0.82_0.17_80)]/30 bg-[oklch(0.82_0.17_80)]/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-[oklch(0.86_0.17_80)]">
               parse mismatch · not draggable
             </div>
           )}
@@ -162,10 +170,10 @@ function CardBody({
           {txn.parseValid && <SendToYNABButton txn={txn} />}
 
           <details className="mt-1">
-            <summary className="cursor-pointer select-none font-mono text-[10px] uppercase tracking-wider text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors">
-              Reasoning
+            <summary className="cursor-pointer select-none font-mono text-[10px] uppercase tracking-wider text-muted-foreground/40 hover:text-muted-foreground/80 transition-colors">
+              LLM reasoning
             </summary>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{txn.reasoning}</p>
+            <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground border-l-2 border-border pl-2.5">{txn.reasoning}</p>
           </details>
         </div>
       )}
@@ -177,21 +185,23 @@ function LineRow({
   label,
   amount,
   credit = false,
+  muted = false,
 }: {
   label: string;
   amount: number;
   credit?: boolean;
+  muted?: boolean;
 }) {
   return (
     <div className="flex items-baseline justify-between gap-2">
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className={cn("text-xs", muted ? "text-muted-foreground/70" : "text-muted-foreground")}>{label}</span>
       <span
         className={cn(
           "font-mono text-xs tabular-nums",
-          credit ? "text-emerald-400" : "text-foreground/80",
+          credit ? "text-[oklch(0.84_0.165_168)]" : muted ? "text-foreground/60" : "text-foreground/85",
         )}
       >
-        {credit ? "-" : ""}
+        {credit ? "−" : ""}
         {formatAmount(Math.abs(amount))}
       </span>
     </div>
