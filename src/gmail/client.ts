@@ -122,7 +122,7 @@ async function fetchMessage(token: string, id: string): Promise<RawEmail | null>
   const headers = msg.payload.headers ?? [];
   const subject = headers.find((h) => h.name.toLowerCase() === "subject")?.value ?? "(no subject)";
   const date = new Date(parseInt(msg.internalDate, 10)).toISOString();
-  const body = findMimeType(msg.payload, "text/html") ?? findMimeType(msg.payload, "text/plain") ?? "";
+  const body = findMimeType(msg.payload, "text/plain") ?? findMimeType(msg.payload, "text/html") ?? "";
 
   return {
     id: msg.id,
